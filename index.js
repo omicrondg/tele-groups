@@ -17,7 +17,7 @@ app.get('/', (req, res) => res.send("Hello world!"));
 
 app.post('/enable-led', (req, res) => {
     var io = req.body.ledState;
-    const data = {
+    /* const data = {
         "elems": {
             "leds": {
                 "tri": {
@@ -27,41 +27,49 @@ app.post('/enable-led', (req, res) => {
                 }
             }
         }
+    } */
+
+    const data = {
+        "elems": {
+            "buzzer": {
+                "enable": true
+            }
+        }
     }
 
     const commandStreamId = 's5ded07ae9ddc524e6dce7b54';
 
-    const options = {
-        hostname: 'octave-api.sierrawireless.io/v5.0',
-        port: 443,
-        path: '/telad_electronics/event/' + commandStreamId,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Auth-Token': 'MME1tIQKzPVBqUOCJCpLmgCSCE9cElGk',
-            'X-Auth-User': 'elkana_molson',
-            //'cache-control': 'no-cache',
-            //'Content-Length': Buffer.byteLength(JSON.stringify(body))
-        }
-    };
+const options = {
+    hostname: 'octave-api.sierrawireless.io/v5.0',
+    port: 443,
+    path: '/telad_electronics/event/' + commandStreamId,
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-Token': 'MME1tIQKzPVBqUOCJCpLmgCSCE9cElGk',
+        'X-Auth-User': 'elkana_molson',
+        //'cache-control': 'no-cache',
+        //'Content-Length': Buffer.byteLength(JSON.stringify(body))
+    }
+};
 
-    // Set up the request
-    var request = https.request(options, function (res) {
-        res.setEncoding('utf8');
-        res.on('data', function (data) {
-            // console.log('Response:___ ' + data);
-        });
-        res.on('error', function (e) {
-            // console.log("Got error: " + e.message);
-        });
-
+// Set up the request
+var request = https.request(options, function (res) {
+    res.setEncoding('utf8');
+    res.on('data', function (data) {
+        // console.log('Response:___ ' + data);
+    });
+    res.on('error', function (e) {
+        // console.log("Got error: " + e.message);
     });
 
-    // post the data
-    request.write(JSON.stringify(data));
-    request.end();
+});
 
-    res.send("Got ya!");
+// post the data
+request.write(JSON.stringify(data));
+request.end();
+
+res.send("Got ya!");
 });
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
