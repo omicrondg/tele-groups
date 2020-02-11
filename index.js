@@ -6,6 +6,10 @@ const PORT = process.env.PORT || 5000;
 
 app.get('/', (req, res) => res.send("Hello world!"));
 
+app.post('/enable-led', (req, res) => {
+    res.send(req.body);
+});
+
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
 (event, context, callback) => {
