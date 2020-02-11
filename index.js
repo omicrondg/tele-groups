@@ -1,8 +1,17 @@
 const express = require('express');
 const https = require('https');
+const cors = require('cors');
 
 const app = express();
+
+var corsOptions = {
+    origin: 'https://yuliagurevich.github.io/',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  }
+
 const PORT = process.env.PORT || 5000;
+
+app.use(cors(corsOptions));
 
 app.get('/', (req, res) => res.send("Hello world!"));
 
