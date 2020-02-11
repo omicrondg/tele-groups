@@ -16,7 +16,7 @@ app.use(cors(corsOptions));
 app.get('/', (req, res) => res.send("Hello world!"));
 
 app.post('/enable-led', (req, res) => {
-    res.send(req);
+    res.send("Got ya!");
 });
 
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
