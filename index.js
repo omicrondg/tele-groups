@@ -4,6 +4,13 @@ const https = require('https');
 const bodyParser = require('body-parser');
 const WebSocket = require('ws');
 
+import Devices from './devices/devices.json';
+
+const OCTAVE_WS_SESSION_REQUEST_URL = 'https://octave-ws.sierrawireless.io/session';
+const OCTAVE_WS_SESSION_URL = 'wss://octave-ws.sierrawireless.io/session';
+
+const PORT = process.env.PORT || 5000;
+
 const app = express();
 
 var corsOptions = {
@@ -12,96 +19,85 @@ var corsOptions = {
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
-const PORT = process.env.PORT || 5000;
-
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
+const wss = new ws.Server({ port: 8181 });
 
-function establishOctaveWsConnection() {
-    // Request session
-    console.log("Start POST request to Octave");
+// On dashboard-server WS connection
+wss.on('connection', (ws, req) => {
+    // Extract connection info
+    const deviceId = req.body.deviceId;
+    const deviceParameters = Devices[deviceId];
 
-    const URL = 'https://octave-ws.sierrawireless.io/session';
-
+    // Request connection to Octave
     const options = {
         method: 'POST',
         headers: {
-            'X-Auth-User': 'alexeyp',
-            'X-Auth-Company': 'efcom',
-            'X-Auth-Token': 'KYcrfTYKomioK2s5i5x7wxkOxRc8zpBQ',
+            'X-Auth-User': deviceParameters.octaveUser,
+            'X-Auth-Company': deviceParameters.octaveCompany,
+            'X-Auth-Token': deviceParameters.octaveToken
         }
-    }
+    };
 
-    const handleResponse = (res) => {
-        let octaveResponse = '';
-
+    const handleOctaveResponse = res => {
         res.setEncoding('utf8');
 
+        let octaveResponse = '';
         res.on('data', chunk => octaveResponse += chunk);
 
         res.on('end', () => {
-            // Establish connection
-            console.log(octaveResponse);
-
+            // On server-octave WS connecion
             const sessionId = JSON.parse(octaveResponse).body.id;
-            wsUrl = `wss://octave-ws.sierrawireless.io/session/${sessionId}/ws`;
+            const wsUrl = `${OCTAVE_WS_SESSION_URL}/${sessionId}/ws`;
 
             const wsc = new WebSocket(wsUrl);
+            wss.send("Attempt to connect");
 
             wsc.on('open', () => {
-                console.log("Octave WebSocket opened");
+                // Subscribe to octave streams
                 wsc.send(JSON.stringify({
                     "msgId": "my_request",
                     "object": "event",
                     "type": "subscribe",
-                    "streamId": "s5e53bf0a70d0d5858ccd48b6"
+                    "streamId": deviceParameters.deviceEnvironmentStream,
                 }));
+
             });
 
-            wsc.on('message', (message) => console.log(message));
-        });
-        res.on('error', e => console.log("Error from Octave"));
-    }
+            wsc.on('message', (message) => {
+                // Transfer the message from Octave to Dashboard
+                wss.send(message);
+            });
+        });        
+    };
 
-    const request = https.request(URL, options, handleResponse);
-
+    const request = https.request(OCTAVE_WS_SESSION_REQUEST_URL, options, handleOctaveResponse);
     request.end();
-}
+
+    // Send request to Octave
+    wss.on('message', () => {
+
+    });
+});
 
 /* Server is alive request */
 app.get('/', (req, res) => res.send("Hello world!"));
 
 /* Enable resource request */
 app.post('/enable-resource', (req, res) => {
-    console.log(">>>> Req body object", req.body);
-    const state = req.body.state;
-    const resource = req.body.resource;
+    const deviceId = req.body.deviceId;
+    const deviceParameters = Devices[deviceId];
+    const resourceName = req.body.resourceName;
 
     let data = null;
 
-    switch (resource) {
+    switch (resourceName) {
         case "buzzer":
-            data = {
-                "elems": {
-                    "buzzer": {
-                        "enable": state
-                    }
-                }
-            };
+            data = { "elems": { "buzzer": { "enable": state } } };
             break;
         case "blue led":
-            data = {
-                "elems": {
-                    "leds": {
-                        "tri": {
-                            "blue": {
-                                "enable": state
-                            }
-                        }
-                    }
-                }
-            };
+            data = { "elems": { "leds": { "tri": { "blue": { "enable": state } } } } };
             break;
         default: ;
     };
@@ -111,43 +107,27 @@ app.post('/enable-resource', (req, res) => {
         // const commandStreamId = 's5ded07ae9ddc524e6dce7b54'; // Local
 
         const options = {
-            //host: 'https://octave-api.sierrawireless.io/v5.0/efcom/event/s5ded07ae9ddc524e6dce7b54',
-            //port: 443,
-            //path: '/efcom/event/' + commandStreamId,
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Auth-Token': 'KYcrfTYKomioK2s5i5x7wxkOxRc8zpBQ',
-                'X-Auth-User': 'alexeyp',
-                //'X-Auth-Token': 'MME1tIQKzPVBqUOCJCpLmgCSCE9cElGk',
-                //'X-Auth-User': 'elkana_molson',
-                //'cache-control': 'no-cache',
-                //'Content-Length': Buffer.byteLength(JSON.stringify(body))
+                'X-Auth-User': deviceParameters.octaveUser,
+                'X-Auth-Token': deviceParameters.octaveToken,
             }
         };
 
         // Set up the request
-        var request = https.request('https://octave-api.sierrawireless.io/v5.0/efcom/event/s5ded07ae9ddc524e6dce7b54', options, function (res) {
+        var request = https.request(`https://octave-api.sierrawireless.io/v5.0/efcom/event/${d}`, options, function (res) {
             // res.setEncoding('utf8');
             res.on('data', function (data) {
-                // console.log('Response:___ ' + data);
-            });
-            res.on('error', function (e) {
-                // console.log("Got error: " + e.message);
-            });
+                res.on('error', function (e) {
 
+                });
+
+                // post the data
+                request.write(JSON.stringify(data));
+                request.end();
+            });
         });
-
-        // post the data
-        request.write(JSON.stringify(data));
-        request.end();
     } catch (err) {
-        console.log(err);
+        res.send("Well... first step went well...");
     }
-
-    res.send("Well... first step went well...");
 });
-
-app.listen(PORT, () => console.log(`Listening on ${PORT}`));
-
-establishOctaveWsConnection();
