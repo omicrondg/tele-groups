@@ -1,17 +1,38 @@
-const express = require('express');
-const cors = require('cors');
+// const express = require('express');
+// const cors = require('cors');
 const https = require('https');
 const bodyParser = require('body-parser');
-const WebSocket = require('ws');
+const WebSocketServer = require('ws').Server;
+const WebSocketClient = require('ws');
 
-import Devices from './devices/devices.json';
+// const Devices = reqiure('./devices/devices.json');
+const Devices = {
+    "MY02": {
+        "deviceId": "",
+        "deviceName": "",
+        "deviceCommandStreamId": "s5ded07ae9ddc524e6dce7b54",
+        "deviceEnvironmentStreamId": "s5e53bf0a70d0d5858ccd48b6",
+        "octaveUser": "alexeyp",
+        "octaveCompany": "efcom",
+        "octaveToken": "KYcrfTYKomioK2s5i5x7wxkOxRc8zpBQ"
+    },
+    "MY01": {
+        "deviceId": "",
+        "deviceName": "",
+        "deviceCommandStreamId": "s5dcd2c41dabb34576e88cc35",
+        "deviceEnvironmentStreamId": "",
+        "octaveUser": "elkana_molson",
+        "octaveCompany": "",
+        "octaveToken": "MME1tIQKzPVBqUOCJCpLmgCSCE9cElGk"
+    }
+}
 
 const OCTAVE_WS_SESSION_REQUEST_URL = 'https://octave-ws.sierrawireless.io/session';
 const OCTAVE_WS_SESSION_URL = 'wss://octave-ws.sierrawireless.io/session';
 
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 
-const app = express();
+// const app = express();
 
 var corsOptions = {
     // origin: 'https://yuliagurevich.github.io/',
@@ -19,73 +40,88 @@ var corsOptions = {
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
-app.use(cors(corsOptions));
-app.use(bodyParser.json());
+// app.use(cors(corsOptions));
+// app.use(bodyParser.json());
 
-const wss = new ws.Server({ port: 8181 });
+const wss = new WebSocketServer({ port: 8181 });
+console.log("Running");
 
 // On dashboard-server WS connection
-wss.on('connection', (ws, req) => {
-    // Extract connection info
-    const deviceId = req.body.deviceId;
-    const deviceParameters = Devices[deviceId];
+wss.on('connection', (ws) => {
+    console.log("Dashboard connected");
 
-    // Request connection to Octave
-    const options = {
-        method: 'POST',
-        headers: {
-            'X-Auth-User': deviceParameters.octaveUser,
-            'X-Auth-Company': deviceParameters.octaveCompany,
-            'X-Auth-Token': deviceParameters.octaveToken
-        }
-    };
+    ws.on('message', (message) => {
+        console.log("Message: ", message);
+        console.log("Trying to connect Octave");
 
-    const handleOctaveResponse = res => {
-        res.setEncoding('utf8');
+        // Extract connection info
+        const deviceCode = JSON.parse(message).body.deviceCode;
+        const deviceParameters = Devices[deviceCode];
 
-        let octaveResponse = '';
-        res.on('data', chunk => octaveResponse += chunk);
+        console.log("Device parameters: ", deviceParameters);
 
-        res.on('end', () => {
-            // On server-octave WS connecion
-            const sessionId = JSON.parse(octaveResponse).body.id;
-            const wsUrl = `${OCTAVE_WS_SESSION_URL}/${sessionId}/ws`;
 
-            const wsc = new WebSocket(wsUrl);
-            wss.send("Attempt to connect");
+        // Request connection from Octave
+        const options = {
+            method: 'POST',
+            headers: {
+                'X-Auth-User': deviceParameters.octaveUser,
+                'X-Auth-Company': deviceParameters.octaveCompany,
+                'X-Auth-Token': deviceParameters.octaveToken
+            }
+        };
 
-            wsc.on('open', () => {
-                // Subscribe to octave streams
-                wsc.send(JSON.stringify({
-                    "msgId": "my_request",
-                    "object": "event",
-                    "type": "subscribe",
-                    "streamId": deviceParameters.deviceEnvironmentStream,
-                }));
+        const handleOctaveResponse = res => {
+            //console.log("Response from Octave: ", res);
+
+            res.setEncoding('utf8');
+
+            let octaveResponse = '';
+            res.on('data', chunk => octaveResponse += chunk);
+
+            res.on('end', () => {
+                // On server-octave WS connecion
+                const sessionId = JSON.parse(octaveResponse).body.id;
+                const wsUrl = `${OCTAVE_WS_SESSION_URL}/${sessionId}/ws`;
+
+                const wsc = new WebSocketClient(wsUrl);
+
+                wsc.on('open', () => {
+                    // Subscribe to octave streams
+                    console.log("WS with Octave opened");
+
+                    wsc.send(JSON.stringify({
+                        "msgId": "my_request",
+                        "object": "event",
+                        "type": "subscribe",
+                        "streamId": deviceParameters.deviceEnvironmentStream,
+                    }));
+
+                });
+
+                wsc.on('message', (message) => {
+                    // Transfer the message from Octave to Dashboard
+                    console.log("Message from Octave: ", message);
+                    
+                    ws.send(message);
+                });
 
             });
+        };
 
-            wsc.on('message', (message) => {
-                // Transfer the message from Octave to Dashboard
-                wss.send(message);
-            });
-        });        
-    };
-
-    const request = https.request(OCTAVE_WS_SESSION_REQUEST_URL, options, handleOctaveResponse);
-    request.end();
-
-    // Send request to Octave
-    wss.on('message', () => {
-
+        const request = https.request(OCTAVE_WS_SESSION_REQUEST_URL, options, handleOctaveResponse);
+        request.end();
     });
+
+
+
 });
 
 /* Server is alive request */
-app.get('/', (req, res) => res.send("Hello world!"));
+// app.get('/', (req, res) => res.send("Hello world!"));
 
 /* Enable resource request */
-app.post('/enable-resource', (req, res) => {
+/* app.post('/enable-resource', (req, res) => {
     const deviceId = req.body.deviceId;
     const deviceParameters = Devices[deviceId];
     const resourceName = req.body.resourceName;
@@ -130,4 +166,4 @@ app.post('/enable-resource', (req, res) => {
     } catch (err) {
         res.send("Well... first step went well...");
     }
-});
+}); */
