@@ -1,5 +1,5 @@
 {
-  "name": "octave-cloud-poc",
+  "name": "telegram-fbgroups-feed-reader",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,18 +8,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yuliagurevich/octave-cloud-poc.git"
+    "url": "git+https://github.com/omicrondg/tele-groups"
   },
-  "author": "Yulia Gurevich",
+  "author": "Dmitry Gurevich",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/yuliagurevich/octave-cloud-poc/issues"
+    "url": "https://github.com/omicrondg/tele-groups/issues"
   },
-  "homepage": "https://github.com/yuliagurevich/octave-cloud-poc#readme",
+  "homepage": "https://github.com/omicrondg/tele-groups#readme",
   "dependencies": {
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-x-hub": "^1.0.4",
     "ws": "^7.2.1"
   },
   "engines": {
