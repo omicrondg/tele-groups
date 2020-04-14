@@ -20,7 +20,7 @@ app.use(bodyParser.json());
 
 var token =
   process.env.TOKEN ||
-  "EAADCkbY6a1ABAH4XgDQBOLODtxEs75DSktMlskRXrtY7m04zTDWhqPojZC2NtZCCoSHPF23SfxBOrYWNJHUV5pqq94qR7eLvHPgbzCXfMJXY0hhCNotp6QqIV4ZCEyyKaB9k3CYLYbZCitF5qEQitLm018jOM3DKHBgQf6UGui4qs9a2gaiAf01ArvTZCmIkZD";
+  "EAADCkbY6a1ABALEIwUWMURQyI3uRKgfs1aUZBrnvRNmbMCMdKnuxLfl4ZCl55Xr606w2nWx27oogjS6GEK4ZAlgTH3TuJYODlnvngevwp4FY5C6PHPrrdx9IZA8oW8VbJfAxm4ExF5aco7S0eR7OLkWpsupyNp4vmHHtYGsuZBF7ymZAJQ72pzMfydik3slilytMpfCTB7BQZDZD";
 var groupId = '2784354238274641';
 var received_updates = [];
 
