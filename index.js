@@ -22,7 +22,7 @@ var token =
   process.env.TOKEN ||
   "EAADCkbY6a1ABALEIwUWMURQyI3uRKgfs1aUZBrnvRNmbMCMdKnuxLfl4ZCl55Xr606w2nWx27oogjS6GEK4ZAlgTH3TuJYODlnvngevwp4FY5C6PHPrrdx9IZA8oW8VbJfAxm4ExF5aco7S0eR7OLkWpsupyNp4vmHHtYGsuZBF7ymZAJQ72pzMfydik3slilytMpfCTB7BQZDZD";
 var groupId = '2784354238274641';
-var received_updates = [];
+var received = [];
 
 /* Server is alive request */
 // app.get('/', (req, res) => res.send("Hello world!"));
@@ -35,9 +35,22 @@ app.get("/feed", function (req, res) {
     console.log(req);
     let query = `${BASE_URL}/${groupId}/feed?access_token=${token}`;
 
-    const request = https.get(query);
+    const request = https.get(query, printFeeds);
     request.end();
-  res.send("<pre>" + JSON.stringify(received_updates, null, 2) + "</pre>");
+  res.send("<pre>" + JSON.stringify(received, null, 2) + "</pre>");
 });
+
+
+const printFeeds = res => {
+    res.setEncoding('utf8');
+
+    let back = '';
+
+    res.on('data', chunk => back += chunk);
+    res.on('end', () => {
+        received = back;
+    })
+
+}
 
 app.listen(PORT);
