@@ -25,11 +25,7 @@ var groupId = '2784354238274641';
 var received = [];
 
 /* Server is alive request */
-// app.get('/', (req, res) => res.send("Hello world!"));
-app.get("/", function (req, res) {
-  console.log(req);
-  res.send("<pre>" + JSON.stringify(received_updates, null, 2) + "</pre>");
-});
+app.get('/', (req, res) => res.send("Hello world!"));
 
 app.get("/feed", function (req, res) {
     console.log(req);
