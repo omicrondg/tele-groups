@@ -18,9 +18,19 @@ app.use(cors(corsOptions));
 // app.use(xhub({ algorithm: "sha1", secret: process.env.APP_SECRET }));
 app.use(bodyParser.json());
 
+//to get new token:
+// https://graph.facebook.com/oauth/access_token?
+// client_id=213931083328336
+// &client_secret=c023d0e85ffda9db25527669815c01d7
+// &redirect_uri=http://example.com/
+// &scope=<comma-separated-list-of-permissions>
+// &grant_type=client_credentials
+
+
+
 var token =
   process.env.TOKEN ||
-  "EAADCkbY6a1ABALEIwUWMURQyI3uRKgfs1aUZBrnvRNmbMCMdKnuxLfl4ZCl55Xr606w2nWx27oogjS6GEK4ZAlgTH3TuJYODlnvngevwp4FY5C6PHPrrdx9IZA8oW8VbJfAxm4ExF5aco7S0eR7OLkWpsupyNp4vmHHtYGsuZBF7ymZAJQ72pzMfydik3slilytMpfCTB7BQZDZD";
+  "0fe4d59509e335b8da4b0a80e1ecb850";
 var groupId = '2784354238274641';
 var received = [];
 
