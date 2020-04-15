@@ -22,15 +22,17 @@ app.use(bodyParser.json());
 // https://graph.facebook.com/oauth/access_token?
 // client_id=213931083328336
 // &client_secret=c023d0e85ffda9db25527669815c01d7
-// &redirect_uri=http://example.com/
-// &scope=<comma-separated-list-of-permissions>
+// &redirect_uri=https://tele-groups.herokuapp.com/feed
+// &scope=groups_access_member_info
 // &grant_type=client_credentials
 
-
-
+// https://graph.facebook.com/oauth/access_token?client_id=213931083328336&client_secret=c023d0e85ffda9db25527669815c01d7&redirect_uri=https://tele-groups.herokuapp.com/feed&scope=groups_access_member_info,public_profile&grant_type=client_credentials
+//https://www.facebook.com/v6.0/dialog/oauth?response_type=token&display=popup&client_id=213931083328336&redirect_uri=https%3A%2F%2Fdevelopers.facebook.com%2Ftools%2Fexplorer%2Fcallback&scope=manage_pages
+// https://www.facebook.com/v6.0/dialog/oauth?response_type=token&display=popup&client_id=213931083328336&redirect_uri=https%3A%2F%2Fdevelopers.facebook.com%2Ftools%2Fexplorer%2Fcallback%3Fmethod%3DGET%26path%3D2784354238274641%252Ffeed%26version%3Dv6.0&auth_type=rerequest&scope=groups_access_member_info%2Cpublic_profile
+var accessToken = 'access_token=213931083328336|c023d0e85ffda9db25527669815c01d7';
 var token =
   process.env.TOKEN ||
-  "EAADCkbY6a1ABAIvmIaCV7jYnkMcObt2YjWUa3ig16tZBVJIb5e0e4z3eFmqov2ekQwGb6U2OGyqS1VtzAWZCEOzuNZBh90ALkhNsQjbv13eIqNG6OcilApYldGMak2qr4ZCV0vuTQWqjkvkZBz95ckwsFs5JT7RR3MQzUkskJvta8AIWsXW9h6M2JjHrZBia4HQCXc1bk9B4hZApZCBWvfWLdRirkgNTi3JFjlik0gQ6xQZDZD";
+  "EAADCkbY6a1ABAEsbWAohLFwWQhp56AfQyPckgtO4ty0ekGnUKTReddOIvQIdqkZAPZCZA2mtzsDKT4zWtZBfPwiImqrl1v0SKYwmYpVcFaVvhKm5XsL4NjzC5tYo0zGvYaJ0TMOP4OwTLBFA3KlvbWHGysAnL79cIaMyQAxXxwZDZD";
 var groupId = '2784354238274641';
 var received = [];
 
@@ -39,7 +41,7 @@ app.get('/', (req, res) => res.send("Hello world!"));
 
 app.get("/feed", function (req, res) {
     console.log(req);
-    let query = `${BASE_URL}/${groupId}/feed?access_token=${token}`;
+    let query = `${BASE_URL}/${groupId}/feed?${accessToken}`;
 
     const request = https.get(query, printFeeds);
     request.end();
